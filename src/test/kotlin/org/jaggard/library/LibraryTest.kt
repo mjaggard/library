@@ -53,6 +53,16 @@ class LibraryTest {
     }
 
     @Test
+    fun findOneBookByIncorrectlyCasedAuthor() {
+        val lib = Library()
+        lib.addBook(roundIreland)
+        lib.addBook(harryPotter)
+
+        assertThat(lib.findByAuthor("tonY HawKs"))
+            .containsExactly(roundIreland)
+    }
+
+    @Test
     fun findMultipleBookByAuthor() {
         val lib = Library()
         lib.addBook(roundIreland)
@@ -62,5 +72,15 @@ class LibraryTest {
 
         assertThat(lib.findByAuthor("J.K. Rowling"))
             .containsExactlyInAnyOrder(harryPotter, harryPotter2)
+    }
+
+    @Test
+    fun findOneBookByTitle() {
+        val lib = Library()
+        lib.addBook(roundIreland)
+        lib.addBook(harryPotter)
+
+        assertThat(lib.findByTitle("Round Ireland with a fridge"))
+            .containsExactly(roundIreland)
     }
 }

@@ -1,7 +1,7 @@
 package org.jaggard.library
 
-import java.util.*
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentSkipListMap
 
 /*
  * This class is responsible for the datastore. Normally this would be in a database of some kind.
@@ -14,7 +14,8 @@ import java.util.concurrent.ConcurrentHashMap
 class Library(
     private val byIsbn: MutableMap<String, Book> = ConcurrentHashMap(),
     // The below could later be a keyword index search to allow "rowling" rather than exactly "J.K. Rowling"
-    private val byAuthor: MutableMap<String, MutableSet<String>> = TreeMap(String.CASE_INSENSITIVE_ORDER) //Ignore case.
+    private val byAuthor: MutableMap<String, MutableSet<String>> = ConcurrentSkipListMap(String.CASE_INSENSITIVE_ORDER),
+    private val byTitle: MutableMap<String, MutableSet<String>> = ConcurrentSkipListMap(String.CASE_INSENSITIVE_ORDER)
 ) {
 
     fun addBook(book: Book) {
@@ -24,6 +25,7 @@ class Library(
             throw IllegalStateException("Book with ISBN '${book.isbn}' is already in this library.")
         }
         addToIndex(byAuthor, book, book.author)
+        addToIndex(byTitle, book, book.title)
     }
 
     private fun addToIndex(index: MutableMap<String, MutableSet<String>>, book: Book, indexedValue: String) {
@@ -35,9 +37,13 @@ class Library(
 
     fun size() = byIsbn.size
 
-    fun findByAuthor(author: String): List<Book> =
-        byAuthor[author]
+    private fun findByIndex(index: Map<String, Set<String>>, indexedValue: String) =
+        index[indexedValue]
             .orEmpty()
             .mapNotNull { byIsbn[it] } //NotNull should not be needed but better than ever getting a NullPointerException
             .toList()
+
+    fun findByAuthor(author: String): List<Book> = findByIndex(byAuthor, author)
+
+    fun findByTitle(title: String): List<Book> = findByIndex(byTitle, title)
 }
