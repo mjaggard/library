@@ -5,14 +5,15 @@ import org.assertj.core.api.Assertions.catchIllegalStateException
 import org.junit.jupiter.api.Test
 
 class LibraryTest {
+    private val roundIreland = Book("ISBN 0-09-186777-0", "Tony Hawks", "Round Ireland with a fridge")
+    private val harryPotter = Book("ISBN 0-7475-8108-8", "J.K. Rowling", "Harry Potter and the Half-Blood Prince")
 
     @Test
     fun addBooksSuccess() {
         val lib = Library()
-        val book = Book("ISBN 0-09-186777-0", "Tony Hawks", "Round Ireland with a fridge")
-        val book2 = Book("ISBN 0-7475-8108-8", "J.K. Rowling", "Harry Potter and the Half-Blood Prince")
-        lib.addBook(book)
-        lib.addBook(book2)
+
+        lib.addBook(roundIreland)
+        lib.addBook(harryPotter)
 
         assertThat(lib.size())
             .isEqualTo(2)
@@ -21,13 +22,45 @@ class LibraryTest {
     @Test
     fun addBookFailure() {
         val lib = Library()
-        val isbn = "ISBN 0-09-186777-0"
-        val book = Book(isbn, "Tony Hawks", "Round Ireland with a fridge")
-        val book2 = Book(isbn /*wrong*/, "J.K. Rowling", "Harry Potter and the Half-Blood Prince")
-        lib.addBook(book)
-        val exception = catchIllegalStateException { lib.addBook(book2) }
+
+        val book2DuplicateIsbn = Book(roundIreland.isbn, "J.K. Rowling", "Harry Potter and the Half-Blood Prince")
+
+        lib.addBook(roundIreland)
+        val exception = catchIllegalStateException { lib.addBook(book2DuplicateIsbn) }
         assertThat(exception)
             .isNotNull()
             .hasMessage("Book with ISBN 'ISBN 0-09-186777-0' is already in this library.")
+    }
+
+    @Test
+    fun findNoBookByAuthor() {
+        val lib = Library()
+        lib.addBook(roundIreland)
+        lib.addBook(harryPotter)
+
+        assertThat(lib.findByAuthor("Charles Dickens"))
+            .isEmpty()
+    }
+
+    @Test
+    fun findOneBookByAuthor() {
+        val lib = Library()
+        lib.addBook(roundIreland)
+        lib.addBook(harryPotter)
+
+        assertThat(lib.findByAuthor("Tony Hawks"))
+            .containsExactly(roundIreland)
+    }
+
+    @Test
+    fun findMultipleBookByAuthor() {
+        val lib = Library()
+        lib.addBook(roundIreland)
+        lib.addBook(harryPotter)
+        val harryPotter2 = Book("ISBN 978-1-4088-5566-9", "J.K. Rowling", "Harry Potter and the Chamber of Secrets")
+        lib.addBook(harryPotter2)
+
+        assertThat(lib.findByAuthor("J.K. Rowling"))
+            .containsExactlyInAnyOrder(harryPotter, harryPotter2)
     }
 }
