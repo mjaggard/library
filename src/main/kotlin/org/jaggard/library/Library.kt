@@ -75,4 +75,6 @@ class Library(
 
         return Result.failure(LibraryException.NotInLibraryException())
     }
+
+    fun numberCheckedOut() = checkedOut.size
 }

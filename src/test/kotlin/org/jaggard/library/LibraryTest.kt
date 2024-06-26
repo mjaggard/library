@@ -119,6 +119,9 @@ class LibraryTest {
             .isNotNull
             .extracting { it!!.book }
             .isEqualTo(roundIreland)
+
+        assertThat(lib.numberCheckedOut())
+            .isOne
     }
 
     @Test
@@ -136,6 +139,9 @@ class LibraryTest {
             .isEqualTo(roundIreland)
 
         result.getOrThrow().returnBook()
+
+        assertThat(lib.numberCheckedOut())
+            .isZero
     }
 
     @Test
@@ -152,6 +158,9 @@ class LibraryTest {
         assertThat(result2.exceptionOrNull())
             .isNotNull
             .isOfAnyClassIn(LibraryException.NotInLibraryException::class.java)
+
+        assertThat(lib.numberCheckedOut())
+            .isOne
     }
 
     @Test
@@ -167,6 +176,9 @@ class LibraryTest {
 
         val result2 = lib.tryBorrow(roundIreland)
         assertThat(result2.isSuccess).isTrue
+
+        assertThat(lib.numberCheckedOut())
+            .isOne
     }
 
     @Test
@@ -180,6 +192,9 @@ class LibraryTest {
         assertThat(result.exceptionOrNull())
             .isNotNull
             .isOfAnyClassIn(LibraryException.NoSuchBookException::class.java)
+
+        assertThat(lib.numberCheckedOut())
+            .isZero
     }
 
     @Test
@@ -201,6 +216,37 @@ class LibraryTest {
             .isNotNull
             .isOfAnyClassIn(LibraryException.AlreadyReturnedException::class.java)
 
+        assertThat(lib.numberCheckedOut())
+            .isZero
+    }
 
+    @Test
+    fun borrowMultipleBooks() {
+        val lib = Library()
+        lib.addBook(roundIreland)
+        lib.addBook(harryPotter)
+
+        assertThat(lib.numberCheckedOut())
+            .isZero
+
+        val result = lib.tryBorrow(roundIreland)
+        assertThat(result.isSuccess)
+            .isTrue
+        assertThat(lib.numberCheckedOut())
+            .isOne
+
+        val result2 = lib.tryBorrow(harryPotter)
+        assertThat(result2.isSuccess)
+            .isTrue
+        assertThat(lib.numberCheckedOut())
+            .isEqualTo(2)
+
+        result.getOrThrow().returnBook()
+        assertThat(lib.numberCheckedOut())
+            .isOne
+
+        result2.getOrThrow().returnBook()
+        assertThat(lib.numberCheckedOut())
+            .isZero
     }
 }
