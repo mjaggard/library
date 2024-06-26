@@ -83,4 +83,25 @@ class LibraryTest {
         assertThat(lib.findByTitle("Round Ireland with a fridge"))
             .containsExactly(roundIreland)
     }
+
+    @Test
+    fun findOneBookByIsbn() {
+        val lib = Library()
+        lib.addBook(roundIreland)
+        lib.addBook(harryPotter)
+
+        assertThat(lib.findByIsbn("ISBN 0-09-186777-0"))
+            .isPresent
+            .contains(roundIreland)
+    }
+
+    @Test
+    fun findNoBookByIsbn() {
+        val lib = Library()
+        lib.addBook(roundIreland)
+        lib.addBook(harryPotter)
+
+        assertThat(lib.findByIsbn("ISBN 978-1-4088-5566-9"))
+            .isEmpty
+    }
 }

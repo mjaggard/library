@@ -1,5 +1,6 @@
 package org.jaggard.library
 
+import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentSkipListMap
 
@@ -46,4 +47,6 @@ class Library(
     fun findByAuthor(author: String): List<Book> = findByIndex(byAuthor, author)
 
     fun findByTitle(title: String): List<Book> = findByIndex(byTitle, title)
+
+    fun findByIsbn(isbn: String): Optional<Book> = Optional.ofNullable(byIsbn[isbn])
 }
