@@ -3,6 +3,7 @@ package org.jaggard.library
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentSkipListMap
+import java.util.concurrent.ConcurrentSkipListSet
 
 /*
  * This class is responsible for the datastore. Normally this would be in a database of some kind.
@@ -16,9 +17,12 @@ class Library(
     private val byIsbn: MutableMap<String, Book> = ConcurrentHashMap(),
     // The below could later be a keyword index search to allow "rowling" rather than exactly "J.K. Rowling"
     private val byAuthor: MutableMap<String, MutableSet<String>> = ConcurrentSkipListMap(String.CASE_INSENSITIVE_ORDER),
-    private val byTitle: MutableMap<String, MutableSet<String>> = ConcurrentSkipListMap(String.CASE_INSENSITIVE_ORDER)
+    private val byTitle: MutableMap<String, MutableSet<String>> = ConcurrentSkipListMap(String.CASE_INSENSITIVE_ORDER),
+    private val checkedOut: MutableSet<String> = ConcurrentSkipListSet()
 ) {
 
+    // We don't actually need a response here.
+    // If we did, a Result would be more suitable than throwing an exception if the book already exists.
     fun addBook(book: Book) {
         val previous = byIsbn.putIfAbsent(book.isbn, book)
         if (previous != null) {
@@ -49,4 +53,26 @@ class Library(
     fun findByTitle(title: String): List<Book> = findByIndex(byTitle, title)
 
     fun findByIsbn(isbn: String): Optional<Book> = Optional.ofNullable(byIsbn[isbn])
+
+    fun tryBorrow(book: Book) = tryBorrow(book.isbn)
+
+    fun tryBorrow(isbn: String): Result<Borrowed> {
+        val book = byIsbn[isbn] ?: return Result.failure(LibraryException.NoSuchBookException())
+
+        if (checkedOut.add(isbn))
+            return Result.success(object : Borrowed {
+                override val book = book
+                private var alreadyReturned = false
+
+                override fun returnBook() {
+                    if (alreadyReturned)
+                        throw LibraryException.AlreadyReturnedException()
+                    if (!checkedOut.remove(book.isbn))
+                        throw IllegalStateException("Should not be possible")
+                    alreadyReturned = true
+                }
+            })
+
+        return Result.failure(LibraryException.NotInLibraryException())
+    }
 }

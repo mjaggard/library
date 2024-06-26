@@ -1,12 +1,12 @@
 package org.jaggard.library
 
-import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.api.Assertions.catchIllegalStateException
+import org.assertj.core.api.Assertions.*
 import org.junit.jupiter.api.Test
 
 class LibraryTest {
     private val roundIreland = Book("ISBN 0-09-186777-0", "Tony Hawks", "Round Ireland with a fridge")
     private val harryPotter = Book("ISBN 0-7475-8108-8", "J.K. Rowling", "Harry Potter and the Half-Blood Prince")
+    private val harryPotter2 = Book("ISBN 978-1-4088-5566-9", "J.K. Rowling", "Harry Potter and the Chamber of Secrets")
 
     @Test
     fun addBooksSuccess() {
@@ -67,7 +67,7 @@ class LibraryTest {
         val lib = Library()
         lib.addBook(roundIreland)
         lib.addBook(harryPotter)
-        val harryPotter2 = Book("ISBN 978-1-4088-5566-9", "J.K. Rowling", "Harry Potter and the Chamber of Secrets")
+
         lib.addBook(harryPotter2)
 
         assertThat(lib.findByAuthor("J.K. Rowling"))
@@ -103,5 +103,104 @@ class LibraryTest {
 
         assertThat(lib.findByIsbn("ISBN 978-1-4088-5566-9"))
             .isEmpty
+    }
+
+
+    @Test
+    fun borrowBookByIsbn() {
+        val lib = Library()
+        lib.addBook(roundIreland)
+        lib.addBook(harryPotter)
+
+        val result = lib.tryBorrow(roundIreland.isbn)
+        assertThat(result.isSuccess)
+            .isTrue
+        assertThat(result.getOrNull())
+            .isNotNull
+            .extracting { it!!.book }
+            .isEqualTo(roundIreland)
+    }
+
+    @Test
+    fun borrowBookAndReturn() {
+        val lib = Library()
+        lib.addBook(roundIreland)
+        lib.addBook(harryPotter)
+
+        val result = lib.tryBorrow(roundIreland)
+        assertThat(result.isSuccess)
+            .isTrue
+        assertThat(result.getOrNull())
+            .isNotNull
+            .extracting { it!!.book }
+            .isEqualTo(roundIreland)
+
+        result.getOrThrow().returnBook()
+    }
+
+    @Test
+    fun borrowBookAlreadyBorrowed() {
+        val lib = Library()
+        lib.addBook(roundIreland)
+        lib.addBook(harryPotter)
+
+        val result = lib.tryBorrow(roundIreland)
+        assertThat(result.isSuccess).isTrue
+        val result2 = lib.tryBorrow(roundIreland)
+        assertThat(result2.isFailure)
+            .isTrue
+        assertThat(result2.exceptionOrNull())
+            .isNotNull
+            .isOfAnyClassIn(LibraryException.NotInLibraryException::class.java)
+    }
+
+    @Test
+    fun borrowBookAlreadyBorrowedAndReturned() {
+        val lib = Library()
+        lib.addBook(roundIreland)
+        lib.addBook(harryPotter)
+
+        val result = lib.tryBorrow(roundIreland)
+        assertThat(result.isSuccess).isTrue
+
+        result.getOrThrow().returnBook()
+
+        val result2 = lib.tryBorrow(roundIreland)
+        assertThat(result2.isSuccess).isTrue
+    }
+
+    @Test
+    fun borrowNonExistentBook() {
+        val lib = Library()
+        lib.addBook(roundIreland)
+        lib.addBook(harryPotter)
+
+        val result = lib.tryBorrow(harryPotter2)
+        assertThat(result.isFailure).isTrue
+        assertThat(result.exceptionOrNull())
+            .isNotNull
+            .isOfAnyClassIn(LibraryException.NoSuchBookException::class.java)
+    }
+
+    @Test
+    fun borrowBookAndReturnTwice() {
+        val lib = Library()
+        lib.addBook(roundIreland)
+        lib.addBook(harryPotter)
+
+        val result = lib.tryBorrow(roundIreland)
+        assertThat(result.isSuccess)
+            .isTrue
+        assertThat(result.getOrNull())
+            .isNotNull
+            .extracting { it!!.book }
+            .isEqualTo(roundIreland)
+
+        result.getOrThrow().returnBook()
+        assertThat(catchThrowable { result.getOrThrow().returnBook() })
+            .isNotNull
+            .isOfAnyClassIn(LibraryException.AlreadyReturnedException::class.java)
+
+
     }
 }
