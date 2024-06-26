@@ -4,9 +4,30 @@ import org.assertj.core.api.Assertions.*
 import org.junit.jupiter.api.Test
 
 class LibraryTest {
-    private val roundIreland = Book("ISBN 0-09-186777-0", "Tony Hawks", "Round Ireland with a fridge")
-    private val harryPotter = Book("ISBN 0-7475-8108-8", "J.K. Rowling", "Harry Potter and the Half-Blood Prince")
-    private val harryPotter2 = Book("ISBN 978-1-4088-5566-9", "J.K. Rowling", "Harry Potter and the Chamber of Secrets")
+    private val roundIreland = Book(
+        isbn = "ISBN 0-09-186777-0",
+        author = "Tony Hawks",
+        title = "Round Ireland with a fridge",
+        reference = false
+    )
+    private val harryPotter = Book(
+        isbn = "ISBN 0-7475-8108-8",
+        author = "J.K. Rowling",
+        title = "Harry Potter and the Half-Blood Prince",
+        reference = false
+    )
+    private val harryPotter2 = Book(
+        isbn = "ISBN 978-1-4088-5566-9",
+        author = "J.K. Rowling",
+        title = "Harry Potter and the Chamber of Secrets",
+        reference = false
+    )
+    private val dictionary = Book(
+        isbn = "ISBN 978-0-19-955846-9",
+        author = "Oxford University Press",
+        title = "Paperback Dictionary & Thesaurus",
+        reference = true
+    )
 
     @Test
     fun addBooksSuccess() {
@@ -23,7 +44,7 @@ class LibraryTest {
     fun addBookFailure() {
         val lib = Library()
 
-        val book2DuplicateIsbn = Book(roundIreland.isbn, "J.K. Rowling", "Harry Potter and the Half-Blood Prince")
+        val book2DuplicateIsbn = Book(roundIreland.isbn, "J.K. Rowling", "Harry Potter and the Half-Blood Prince", false)
 
         lib.addBook(roundIreland)
         val exception = catchIllegalStateException { lib.addBook(book2DuplicateIsbn) }
@@ -248,5 +269,21 @@ class LibraryTest {
         result2.getOrThrow().returnBook()
         assertThat(lib.numberCheckedOut())
             .isZero
+    }
+
+    @Test
+    fun borrowReferenceBook() {
+        val lib = Library()
+        lib.addBook(roundIreland)
+        lib.addBook(harryPotter)
+        lib.addBook(dictionary)
+
+        val result = lib.tryBorrow(dictionary)
+        assertThat(result.isFailure)
+            .isTrue
+        assertThat(result.exceptionOrNull())
+            .isNotNull
+            .isOfAnyClassIn(LibraryException.CannotBeBorrowedException::class.java)
+            .hasMessage("Reference books cannot be borrowed.")
     }
 }

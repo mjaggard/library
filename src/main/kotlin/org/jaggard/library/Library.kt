@@ -25,10 +25,10 @@ class Library(
     // If we did, a Result would be more suitable than throwing an exception if the book already exists.
     fun addBook(book: Book) {
         val previous = byIsbn.putIfAbsent(book.isbn, book)
-        if (previous != null) {
+        if (previous != null)
             // ConcurrentHashMap cannot contain null as a genuine value
             throw IllegalStateException("Book with ISBN '${book.isbn}' is already in this library.")
-        }
+
         addToIndex(byAuthor, book, book.author)
         addToIndex(byTitle, book, book.title)
     }
@@ -58,6 +58,9 @@ class Library(
 
     fun tryBorrow(isbn: String): Result<Borrowed> {
         val book = byIsbn[isbn] ?: return Result.failure(LibraryException.NoSuchBookException())
+
+        if (book.reference)
+            return Result.failure(LibraryException.CannotBeBorrowedException("Reference books cannot be borrowed."))
 
         if (checkedOut.add(isbn))
             return Result.success(object : Borrowed {
