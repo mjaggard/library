@@ -35,7 +35,7 @@ class Library(
 
     private fun addToIndex(index: MutableMap<String, MutableSet<String>>, book: Book, indexedValue: String) {
         // If the index doesn't contain the indexedValue then we add a new set containing this book's ISBN.
-        val existingBooksByIndex = index.putIfAbsent(indexedValue, mutableSetOf(book.isbn))
+        val existingBooksByIndex = index.putIfAbsent(indexedValue, ConcurrentSkipListSet(setOf(book.isbn)))
         // If it did contain the indexedValue then we add the book's ISBN to the set.
         existingBooksByIndex?.add(book.isbn)
     }
